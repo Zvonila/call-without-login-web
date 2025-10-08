@@ -1,83 +1,58 @@
-import './style.css'
+import { PageController } from "./pageController";
+import { Repository } from "./repository";
+import { ZvonilaCore } from "./newwebrtc";
+import "./style.css";
 
-const textareaForOffer = document.querySelector("#offer") as HTMLTextAreaElement;
-const textareaForAnswer = document.querySelector("#answer") as HTMLTextAreaElement;
-const createRoomButton = document.querySelector("#create-room") as HTMLButtonElement;
+// --- DOM ---
 const connectToRoomButton = document.querySelector("#connect-to-room") as HTMLButtonElement;
-
+const createRoomButton = document.querySelector("#create-room") as HTMLButtonElement;
 const localVideo = document.querySelector("#localVideo") as HTMLVideoElement;
 const remoteVideo = document.querySelector("#remoteVideo") as HTMLVideoElement;
+const exitFromRoomButton = document.querySelector("#exit-from-room") as HTMLButtonElement;
+const copyKeyButton = document.querySelector("#copy-key") as HTMLButtonElement;
 
-const peerConnection = new RTCPeerConnection();
+// --- Router ---
+const pageController = new PageController([
+  {
+    path: "/",
+    id: "hall-page"
+  },
+  {
+    path: "/conference",
+    id: "conference-page"
+  },
+]);
 
-const localStream = await navigator.mediaDevices.getUserMedia({ video: true });
-localVideo.srcObject = localStream;
-localStream.getTracks().forEach(track => {
-  peerConnection.addTrack(track, localStream);
+// --- Repository (Firebase) ---
+const repo = new Repository()
+
+// --- Zvonila Core ---
+const zvonilaCore = new ZvonilaCore({
+  repo: repo,
+  localVideoElement: localVideo,
+  remoteVideoElement: remoteVideo,
 });
 
-peerConnection.addEventListener('track', async (event) => {
-  const [remoteStream] = event.streams;
-  console.log("Получен remote stream:", remoteStream);
-  remoteVideo.srcObject = remoteStream;
-});
-
-const localCandidates: RTCIceCandidateInit[] = [];
-peerConnection.onicecandidate = event => {
-  if (event.candidate) {
-    localCandidates.push(event.candidate.toJSON());
-    console.log("Local ICE candidate:", event.candidate);
-  } else {
-    // Когда ICE собрались полностью, выводим всё в textarea
-    const data = {
-      sdp: peerConnection.localDescription,
-      ice: localCandidates
-    };
-    if (peerConnection.localDescription?.type === 'offer') {
-      textareaForOffer.value = JSON.stringify(data);
-    } else {
-      textareaForAnswer.value = JSON.stringify(data);
-    }
-  }
-};
-
-createRoomButton.addEventListener("click", async () => {
-  const offer = await peerConnection.createOffer();
-  await peerConnection.setLocalDescription(offer);
+// --- Listeners ---
+connectToRoomButton.addEventListener("click", async () => {
+  const key = await navigator.clipboard.readText();
+  pageController.goTo(`/conference`)
+  await zvonilaCore.connectToRoom(key);
 })
 
-connectToRoomButton.addEventListener("click", async () => {
-  const data = JSON.parse(textareaForOffer.value);
-  const offer = data.sdp as RTCSessionDescriptionInit;
-  const iceCandidates = data.ice as RTCIceCandidateInit[];
+createRoomButton.addEventListener("click", async () => {
+  await zvonilaCore.createRoom();
+  pageController.goTo("/conference")
+  console.log(zvonilaCore.currentRoomId)
+})
 
-  await peerConnection.setRemoteDescription(offer);
+exitFromRoomButton.addEventListener("click", () => {
+  zvonilaCore.disconnectFromTheRoom();
+  pageController.goTo("/")
+})
 
-  const answer = await peerConnection.createAnswer();
-  await peerConnection.setLocalDescription(answer);
-
-  // Добавляем ICE от другого устройства
-  iceCandidates.forEach(c => peerConnection.addIceCandidate(new RTCIceCandidate(c)));
-
-  // Выводим Answer и свои ICE
-  peerConnection.onicecandidate = event => {
-    if (event.candidate) {
-      localCandidates.push(event.candidate.toJSON());
-    } else {
-      const data = {
-        sdp: peerConnection.localDescription,
-        ice: localCandidates
-      };
-      textareaForAnswer.value = JSON.stringify(data);
-    }
-  };
-});
-
-textareaForAnswer.addEventListener("change", async () => {
-  const data = JSON.parse(textareaForAnswer.value);
-  const answer = data.sdp as RTCSessionDescriptionInit;
-  const iceCandidates = data.ice as RTCIceCandidateInit[];
-
-  await peerConnection.setRemoteDescription(answer);
-  iceCandidates.forEach(c => peerConnection.addIceCandidate(new RTCIceCandidate(c)));
-});
+copyKeyButton.addEventListener("click", () => {
+  if (zvonilaCore.currentRoomId) {
+    navigator.clipboard.writeText(zvonilaCore.currentRoomId)
+  }
+})
