@@ -35,9 +35,12 @@ const zvonilaCore = new ZvonilaCore({
 
 // --- Listeners ---
 connectToRoomButton.addEventListener("click", async () => {
-  const key = await navigator.clipboard.readText();
+  let inputKey = (document.querySelector("#room-id") as HTMLInputElement).value
   pageController.goTo(`/conference`)
-  await zvonilaCore.connectToRoom(key);
+
+  if (inputKey) {
+    await zvonilaCore.connectToRoom(inputKey);
+  }
 })
 
 createRoomButton.addEventListener("click", async () => {
@@ -56,3 +59,11 @@ copyKeyButton.addEventListener("click", () => {
     navigator.clipboard.writeText(zvonilaCore.currentRoomId)
   }
 })
+
+setInterval(() => {
+  console.clear();
+  zvonilaCore.logs.map(log => {
+    console.log(log)
+  });
+  (document.querySelector("#status") as HTMLParagraphElement).textContent = zvonilaCore.logs[zvonilaCore.logs.length - 1]
+}, 1000)

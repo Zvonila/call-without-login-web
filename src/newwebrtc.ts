@@ -21,6 +21,7 @@ export class ZvonilaCore {
     private repo: Repository;
     public currentRoomId: string | null = null;
     private localStream: MediaStream | null = null;
+    public logs: string[] = [];
 
     localVideoElement: HTMLVideoElement;
     remoteVideoElement: HTMLVideoElement;
@@ -37,11 +38,11 @@ export class ZvonilaCore {
             iceServers: [
                 { urls: "stun:stun.l.google.com:19302" },
                 {
-                    urls: "turn:relay.metered.ca:80",
-                    username: "webrtc",
-                    credential: "webrtc"
+                    urls: import.meta.env.VITE_TURN_URL,
+                    username: import.meta.env.VITE_TURN_USERNAME,
+                    credential: import.meta.env.VITE_TURN_CREDENTIAL
                 }
-            ]
+            ],
         });
     }
 
@@ -52,9 +53,9 @@ export class ZvonilaCore {
             this.localStream.getTracks().forEach(track => {
                 this.pc.addTrack(track, this.localStream!);
             });
-            console.log("✅ Создание медиапотока успешно")
+            this.logs.push("✅ Создание медиапотока успешно")
         } catch (err) {
-            console.log("❗️ Создание медиапотока провалено")
+            this.logs.push("❗️ Создание медиапотока провалено")
         }
     }
 
@@ -62,7 +63,7 @@ export class ZvonilaCore {
         this.pc.ontrack = (event) => {
             const [remoteStream] = event.streams;
             this.remoteVideoElement.srcObject = remoteStream;
-            console.log("✅ remoteStream получен!");
+            this.logs.push("✅ remoteStream получен!");
         }
     }
 
@@ -71,11 +72,17 @@ export class ZvonilaCore {
             const candidates: RTCIceCandidate[] = [];
             let offer: RTCSessionDescriptionInit;
 
+            const iceTimeout = setTimeout(() => {
+                this.logs.push("⚠️ ICE таймаут, резолвим собранные кандидаты")
+                resolve({ candidates, offer })
+            }, 10000);
+
             this.pc.onicecandidate = event => {
                 if (event.candidate) {
                     candidates.push(event.candidate);
                 } else {
-                    console.log("✅ Создание оффера и поиск кандидатов успешно!")
+                    clearTimeout(iceTimeout);
+                    this.logs.push("✅ Создание оффера и поиск кандидатов успешно!")
                     resolve({ candidates, offer })
                 }
             }
@@ -84,7 +91,7 @@ export class ZvonilaCore {
                 offer = await this.pc.createOffer();
                 await this.pc.setLocalDescription(offer);
             } catch (err) {
-                console.log("❗️ Создание оффера и поиск кандидатов провалено!")
+                this.logs.push("❗️ Создание оффера и поиск кандидатов провалено!")
                 reject(err)
             }
         })
@@ -96,9 +103,9 @@ export class ZvonilaCore {
             if (!this.pc.currentRemoteDescription && data?.answer) {
                 try {
                     await this.pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-                    console.log("✅ Удалённый ответ получен и установлен!")
+                    this.logs.push("✅ Удалённый ответ получен и установлен!")
                 } catch (err) {
-                    console.log("❗️ Удалённый ответ получен, но не установлен!")
+                    this.logs.push("❗️ Удалённый ответ получен, но не установлен!")
                 }
             }
         })
@@ -107,9 +114,9 @@ export class ZvonilaCore {
         this.repo.listenCalleeCandidates(roomId, async (candidateData) => {
             try {
                 await this.pc.addIceCandidate(new RTCIceCandidate(candidateData));
-                console.log("✅ Удалённый кандидат добавлен!")
+                this.logs.push("✅ Удалённый кандидат добавлен!")
             } catch (err) {
-                console.log("❗️ Удалённый кандидат не добавлен!")
+                this.logs.push("❗️ Удалённый кандидат не добавлен!")
             }
         })
     }
@@ -136,7 +143,7 @@ export class ZvonilaCore {
                 if (event.candidate) {
                     candidates.push(event.candidate);
                 } else {
-                    console.log("✅ Создание ответа и поиск кандидатов успешно!")
+                    this.logs.push("✅ Создание ответа и поиск кандидатов успешно!")
                     resolve({ candidates, answer })
                 }
             }
@@ -146,7 +153,7 @@ export class ZvonilaCore {
                 answer = await this.pc.createAnswer();
                 await this.pc.setLocalDescription(answer);
             } catch (err) {
-                console.log("❗️ Создание ответа и поиск кандидатов провалено!")
+                this.logs.push("❗️ Создание ответа и поиск кандидатов провалено!")
                 reject(err)
             }
         })
@@ -157,9 +164,9 @@ export class ZvonilaCore {
         this.repo.listenCallerCandidates(roomId, async (candidateData) => {
             try {
                 await this.pc.addIceCandidate(new RTCIceCandidate(candidateData));
-                console.log("✅ Удалённый кандидат добавлен!")
+                this.logs.push("✅ Удалённый кандидат добавлен!")
             } catch (err) {
-                console.log("❗️ Удалённый кандидат не добавлен!")
+                this.logs.push("❗️ Удалённый кандидат не добавлен!")
             }
         })
     }
@@ -167,7 +174,7 @@ export class ZvonilaCore {
     public async connectToRoom(id: string) {
         const room = await this.repo.getRoom(id);
         if (!room) {
-            console.log("❗️ Комната не найдена!")
+            this.logs.push("❗️ Комната не найдена!")
             return;
         }
         this.onRemoteTrack();
@@ -190,9 +197,9 @@ export class ZvonilaCore {
             if (this.localVideoElement) this.localVideoElement.srcObject = null;
             if (this.remoteVideoElement) this.remoteVideoElement.srcObject = null;
             await this.repo.removeRoom(this.currentRoomId!);
-            console.log("✅ Звонок завершён корректно")
+            this.logs.push("✅ Звонок завершён корректно")
         } catch (err) {
-            console.log("❗️ Звонок завершён некорректно")
+            this.logs.push("❗️ Звонок завершён некорректно")
         }
     }
 }
