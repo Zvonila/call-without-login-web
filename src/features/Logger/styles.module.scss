@@ -1,0 +1,16 @@
+.logger {
+    width: 400px;
+    height: auto;
+    padding: 14px;
+    border-radius: 14px;
+    background: white;
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 3;
+
+    @media (max-width: 768px) {
+        width: 200px;
+        font-size: 14px;
+    }
+}

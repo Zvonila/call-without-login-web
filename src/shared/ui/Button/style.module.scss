@@ -1,0 +1,33 @@
+.button {
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 18px 18px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+    font-family: "Unbounded";
+    width: max-content;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 14px rgba(79, 70, 229, 0.4);
+    }
+
+    &:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+    }
+
+    &:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+}

@@ -1,0 +1,11 @@
+.header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    padding: 18px;
+
+    &-logo {
+        font-weight: 700;
+    }
+}

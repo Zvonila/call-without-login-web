@@ -1,5 +1,5 @@
 import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
-import { db } from "./firebase";
+import { db } from "@shared/configs/firebase/firebase";
 import type { IRoom } from "./type";
 
 export class Repository {
@@ -66,7 +66,7 @@ export class Repository {
             id,
             isCreator ? "callerCandidates" : "calleeCandidates"
         );
-
+        console.log("Кандидат добавляется: ")
         await addDoc(candidatesCollection, candidate.toJSON());
     }
 }

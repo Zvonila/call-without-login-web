@@ -1,0 +1,36 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Roboto Flex", sans-serif;
+}
+
+body {
+  height: 100vh;
+  background-image: linear-gradient(to right top, #d5e6ff, #d8e1f4, #d9dce9, #d7d8de, #d4d4d4);
+}
+
+.container {
+  width: 1200px;
+  margin: 0 auto;
+}
+
+@media (max-width: 1250px) {
+  .container {
+    width: 900px;
+  }
+}
+
+@media (max-width: 980px) {
+  .container {
+    width: 600px;
+    padding: 16px;
+  }
+}
+
+@media (max-width: 630px) {
+  .container {
+    width: 100%;
+    padding: 16px;
+  }
+}

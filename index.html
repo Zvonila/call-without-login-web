@@ -10,51 +10,15 @@
   <!-- fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,100..1000&display=swap"
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,100..1000&family=Unbounded:wght@200..900&display=swap"
     rel="stylesheet">
 
 </head>
 
 <body>
-  <p id="status"></p>
-  <!-- home page -->
-  <section id="hall-page">
-    <div class="hall">
-      <p>Данный чат не реализует авторизацию клиентов, за счёт чего вы остаётесь анонимными.</p>
-      <p>Приложение поддерживает одноранговое соединение.</p>
-      <p>Подключение происходит при помощи ключа, который вам выдаёт администратор комнаты.</p>
-
-      <div class="hall-buttons">
-        <input id="room-id" placeholder="Введите id комнаты" />
-        <button id="connect-to-room">Подключиться</button>
-        <button id="create-room">Создать комнату</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- conf page -->
-  <section id="conference-page">
-    <div class="conf">
-      <div class="remote-video-container">
-        <video id="remoteVideo" onclick="" autoplay playsinline></video>
-
-        <div class="local-video-container">
-          <video id="localVideo" onclick="" autoplay muted playsinline></video>
-        </div>
-
-        <div class="controls">
-          <button id="exit-from-room">Выйти</button>
-          <button id="copy-key">
-            <img src="/key.svg" />
-          </button>
-          <!-- <p id="room-id"></p> -->
-        </div>
-      </div>
-    </div>
-  </section>
-
-
-  <script type="module" src="/src/main.ts"></script>
+  <div id="root"></div>
+  <script type="module" src="/src/app/main.tsx"></script>
 </body>
 
 </html>
