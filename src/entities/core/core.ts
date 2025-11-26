@@ -26,14 +26,12 @@ export class ZvonilaCore extends EventEmitter {
         const pc = new RTCPeerConnection({
             iceServers: [
                 { urls: import.meta.env.VITE_STUN_URL },
-                // { urls: "stun:stun4.l.google.com:19302" },
                 {
                     urls: import.meta.env.VITE_TURN_URL,
                     username: import.meta.env.VITE_TURN_USERNAME,
                     credential: import.meta.env.VITE_TURN_CREDENTIAL
                 }
             ],
-            // iceTransportPolicy: "relay"
         });
 
         pc.onicegatheringstatechange = () => {
@@ -79,20 +77,6 @@ export class ZvonilaCore extends EventEmitter {
         return offer;
     }
 
-    // private findCandidate(roomId: string, isCreator: boolean) {
-    //     this.logs.push("Поиск ICE кандидатов")
-    //     this.pc.onicecandidate = async (event) => {
-    //         if (event.candidate) {
-    //             try {
-    //                 await this.repo.addCandidate(roomId, isCreator, event.candidate);
-    //                 this.logs.push("ICE кандидат успешно добавлен");
-    //             } catch (error) {
-    //                 console.log(`Ошибка при добавлении ICE кандидата: ${error}`);
-    //             }
-    //         }
-    //     }
-    // }
-
     private setupIceCandidateHandler() {
         this.pc.onicecandidate = async (event) => {
             if (!event.candidate) return;
@@ -129,7 +113,7 @@ export class ZvonilaCore extends EventEmitter {
     }
 
 
-    private async answerListener(roomId: string) {
+    private answerListener(roomId: string) {
         // Слушаем ответ answer
         this.repo.listenRoom(roomId, async (data) => {
             if (!this.pc.currentRemoteDescription && data?.answer) {
@@ -161,10 +145,10 @@ export class ZvonilaCore extends EventEmitter {
         // Запись данных в бд
         const roomId = await this.repo.createRoom(offer);
         this.currentRoomId = roomId;
+        this.notify();
 
-        await this.flushPendingCandidates(roomId, true)
-        // this.findCandidate(roomId, true)
-        await this.answerListener(roomId);
+        this.flushPendingCandidates(roomId, true)
+        this.answerListener(roomId);
         this.notify();
 
         return roomId;
